@@ -1,0 +1,10 @@
+ThemeFile=xterm
+Transparency=off
+CursorType=block
+Font=Consolas
+FontHeight=14
+Locale=zh_CN
+Charset=UTF-8
+ZoomShortcuts=no
+SwitchShortcuts=no
+RightClickAction=Paste
