@@ -1,9 +1,10 @@
 FROM osrf/ros:humble-desktop-full
-RUN apt-get update && apt-get install command-not-found iproute2 iputils-ping vim openssh-server tmux htop -y && apt-get update
+RUN apt-get update && apt-get install command-not-found iproute2 iputils-ping vim -y
+RUN apt-get install openssh-server tmux htop -y && apt-get update
 
 RUN echo 'Asia/Shanghai' > /etc/timezone && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-sed -i '/Defaults env_reset/a Defaults env_keep = "http_proxy https_proxy ftp_proxy DISPLAY XAUTHORITY"' /etc/sudoers
+RUN sed -i '/Defaults\s*env_reset/a Defaults env_keep = "http_proxy https_proxy ftp_proxy no_proxy DISPLAY XAUTHORITY"' /etc/sudoers
 
 RUN mkdir /var/run/sshd
 EXPOSE 22
@@ -17,11 +18,10 @@ USER ubuntu
 RUN mkdir $HOME/.ssh && chmod 700 $HOME/.ssh 
 
 RUN <<EOF cat > $HOME/.ssh/authorized_keys
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9sKUC7XhZOUVWs2WjWx07euBSDNE/6XUGRq+2G8Q7E/+Chx8r923TOsDzT0l5cmEMfK93jl3tjI6lyb3zrPpBRP70ejH3bOY9OJvTN+mPZCo5M0Ffb/R/dNHotM8ckykz/qL/ZS2nUpum72kph7o/hSrTMnRsHNGZtN3dManSU6wG0FngKYDECeuRpI2JT+XD1+9Y2tCjc38iG1e2IgitskOU5aY0i+MG2qDk6uMpDlEATHOh7sNkj7aXB3dWCO18kEBS/Lxu4VlyuNmbaWvoo30jSLl9XEoN1j6CD4paty4CCUYUr2NQhHMaVvzzHj2qIWYJ+7ldSdN4f9BadrB rsa-key-20240523
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0vysSc4mAuX6z1lN69YYGHZRNZxUXGXlT2v89O4AYxHCMeIHaD7NLWIFn0akCIoqx9WpwMxz2l2M0ZzJwV7NF9J1T5f7GdqC54Pb/m4M1oADGyi92KcdsBYXjbqJOSow5YDWvSMRes64BV41cSx+rqhtbzOKtvhRzfmNibxPJZaNZ3CM1y2tiEq4Nxi9Colfnq+Fa2CccUgV5S07vZKfSzg1hqJjki6Y/TgvfQQCsai7yQBycGe8G3GUh5C5rVLG2hgax5imgoLuTvVA9Oa65CScB+Kc+P2jK0a8ghs4wg5wVGgXdZTikf2tYGJxHECnJCsYqxLEC2MDMUuRpEd3f rsa-key-20240531
+ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArWM+lwt05DEKKUwrAyFbW6CYocRAJot7hLA4RmQemIyzy5Dg1o+r8DdBfo8glZ3Ka54tKSmeDSCxpN1p3TOlfTODrCKxHYxp9OP0qHa7ZffMrfBq2gdGJF7rdv1yUflAkR2dd0VodpRqVRgQdrWAIMKvMg3R8Npurzku0djSGqmVU4Dht0qMnGE7l9iKhmiDkjDRpUK4fuQkhR8IcOYDtb0wcrg7o8qUI1eSxj5BrtfsJ22vut6dkNw/qrvGrJuJrG76zv1ZUtZEBQS6kC8JEbXHwtuZ3YKPlST7T5Jhy4jT+gyiQZ0f/kK1nQjcftURjjBoGZw4ViWhSp3YSEHFyQ== rsa-key-20180602
 EOF
 
-RUN cd $HOME && git clone https://github.com/wsxq2/profile.git .MyProfile && cd .MyProfile
+RUN cd $HOME && git clone https://github.com/wsxq2/profile.git .MyProfile
 
 # qt-creator-ros
 
