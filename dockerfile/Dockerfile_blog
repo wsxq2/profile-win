@@ -1,28 +1,39 @@
 FROM ubuntu:20.04
 ARG PROXY_HOST=192.168.3.34
+ARG DEBIAN_FRONTEND=noninteractive
+
+# use ustc mirror
 RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
 RUN sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 #RUN sed -i 's/http:/https:/g' /etc/apt/sources.list
+
+# set timezone
 RUN apt-get update
+RUN echo 'Asia/Shanghai' > /etc/timezone && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN TZ=Asia/Shanghai apt-get -y install tzdata
+
+# install software
+RUN apt-get update
+RUN apt-get install apt-utils -y
 RUN apt-get install sudo command-not-found iproute2 iputils-ping -y
-RUN apt-get install vim openssh-server -y
+RUN apt-get install vim -y
+RUN apt-get install openssh-server -y
 RUN apt-get install tmux htop git -y
 RUN apt-get update
 
-RUN echo 'Asia/Shanghai' > /etc/timezone && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-
+# set sudo
 RUN sed -i '/Defaults\s*env_reset/a Defaults env_keep = "http_proxy https_proxy ftp_proxy DISPLAY XAUTHORITY"' /etc/sudoers
+RUN echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
+# set ssh
 RUN mkdir /var/run/sshd
 EXPOSE 22
 
-RUN useradd -m -s /bin/bash -G sudo ubuntu -p '$6$Ri8lP7vRgVxNpBTC$RelZVvhFDpdWkkJSCVQY/WQ7tI36pmrctvJDEdYIAnGp48fBLZnmH/Z0gwDsLF6aOhUuhNwy0Dqs1exKCW0XX1'
+# redirect sh to bash
+RUN ln -sf /bin/bash /bin/sh
 
-# install rvm
-RUN apt-get install software-properties-common -y
-RUN apt-add-repository -y ppa:rael-gc/rvm
-RUN apt-get update
-RUN apt-get install rvm -y
+# add user ubuntu with default password
+RUN useradd -m -s /bin/bash -G sudo ubuntu -p '$6$Ri8lP7vRgVxNpBTC$RelZVvhFDpdWkkJSCVQY/WQ7tI36pmrctvJDEdYIAnGp48fBLZnmH/Z0gwDsLF6aOhUuhNwy0Dqs1exKCW0XX1'
 
 # for solving putty chinese problem
 RUN apt-get install language-pack-zh-hans -y
@@ -30,6 +41,7 @@ RUN sed -Ei 's/^# (en_US.UTF-8.*$)/\1/' /etc/locale.gen && sudo locale-gen
 
 USER ubuntu
 
+# for ssh
 RUN mkdir $HOME/.ssh && chmod 700 $HOME/.ssh 
 
 RUN <<EOF cat > $HOME/.ssh/authorized_keys
@@ -37,17 +49,25 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF9sKUC7XhZOUVWs2WjWx07euBSDNE/6XUGRq+2G8Q
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0vysSc4mAuX6z1lN69YYGHZRNZxUXGXlT2v89O4AYxHCMeIHaD7NLWIFn0akCIoqx9WpwMxz2l2M0ZzJwV7NF9J1T5f7GdqC54Pb/m4M1oADGyi92KcdsBYXjbqJOSow5YDWvSMRes64BV41cSx+rqhtbzOKtvhRzfmNibxPJZaNZ3CM1y2tiEq4Nxi9Colfnq+Fa2CccUgV5S07vZKfSzg1hqJjki6Y/TgvfQQCsai7yQBycGe8G3GUh5C5rVLG2hgax5imgoLuTvVA9Oa65CScB+Kc+P2jK0a8ghs4wg5wVGgXdZTikf2tYGJxHECnJCsYqxLEC2MDMUuRpEd3f rsa-key-20240531
 EOF
 
-RUN cd $HOME && git clone https://github.com/wsxq2/profile.git .MyProfile && cd .MyProfile && ./deploy.sh $PROXY_HOST
+# deploy profile
+RUN git clone https://github.com/wsxq2/profile.git $HOME/.MyProfile 
+RUN cd $HOME/.MyProfile && ./deploy.sh $PROXY_HOST
 
-RUN usermod -a -G rvm $USER
-RUN echo 'RUN source "/etc/profile.d/rvm.sh"' >> $HOME/.bashrc
+# install rvm: cant use root to install
+RUN sudo apt-get install software-properties-common -y
+RUN sudo apt-add-repository -y ppa:rael-gc/rvm
+RUN sudo apt-get update
+RUN sudo apt-get install rvm -y
+RUN sudo usermod -a -G rvm ubuntu
+RUN source "/etc/profile.d/rvm.sh" && echo 'source "/etc/profile.d/rvm.sh"' >> $HOME/.bashrc
 
 # install ruby, bundler
-RUN rvm install 2.7.2 && rvm use 2.7.2 && gem install bundler:2.2.1
+#RUN rvm install 2.7.2
+#RUN rvm use 2.7.2 && gem install bundler:2.2.1
 
 # blog
 RUN git clone https://github.com/wsxq2/wsxq2.github.io.git $HOME/.wsxq2.github.io
-
+#RUN cd $HOME/.wsxq2.github.io/ && bundle install
 EXPOSE 8888
 
 USER root
